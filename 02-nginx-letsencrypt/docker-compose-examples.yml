@@ -1,0 +1,235 @@
+# Ejemplos de docker-compose para usar con Nginx reverse proxy
+# El Nginx (en el host) hará proxy a estos contenedores
+
+# ============================================
+# Ejemplo 1: Aplicación Node.js simple
+# ============================================
+version: '3.8'
+services:
+  node-app:
+    image: node:18-alpine
+    container_name: mi-app-node
+    working_dir: /app
+    volumes:
+      - ./mi-app:/app
+    ports:
+      - "3000:3000"  # Expone al host en localhost:3000
+    command: npm start
+    restart: unless-stopped
+
+# Configuración Nginx correspondiente:
+# location / {
+#     proxy_pass http://localhost:3000;
+#     proxy_set_header Host $host;
+# }
+
+# ============================================
+# Ejemplo 2: Stack completo (Frontend + Backend + DB)
+# ============================================
+version: '3.8'
+services:
+  frontend:
+    image: nginx:alpine
+    container_name: frontend
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html
+    ports:
+      - "3001:80"
+    restart: unless-stopped
+
+  backend:
+    image: node:18-alpine
+    container_name: backend
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    ports:
+      - "3002:3000"
+    environment:
+      - DATABASE_URL=postgresql://user:pass@db:5432/mydb
+      - NODE_ENV=production
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+      - POSTGRES_DB=mydb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    # NO expongas puertos si solo lo usa el backend
+
+volumes:
+  postgres_data:
+
+# Configuración Nginx:
+# server {
+#     server_name app.ejemplo.com;
+#     location / {
+#         proxy_pass http://localhost:3001;
+#     }
+#     location /api {
+#         proxy_pass http://localhost:3002;
+#     }
+# }
+
+# ============================================
+# Ejemplo 3: WordPress con MySQL
+# ============================================
+version: '3.8'
+services:
+  wordpress:
+    image: wordpress:latest
+    container_name: wordpress
+    ports:
+      - "8080:80"
+    environment:
+      - WORDPRESS_DB_HOST=wordpress-db
+      - WORDPRESS_DB_USER=wpuser
+      - WORDPRESS_DB_PASSWORD=wppass
+      - WORDPRESS_DB_NAME=wordpress
+    volumes:
+      - wordpress_data:/var/www/html
+    depends_on:
+      - wordpress-db
+    restart: unless-stopped
+
+  wordpress-db:
+    image: mysql:8.0
+    container_name: wordpress-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpass
+      - MYSQL_DATABASE=wordpress
+      - MYSQL_USER=wpuser
+      - MYSQL_PASSWORD=wppass
+    volumes:
+      - wordpress_db_data:/var/lib/mysql
+    restart: unless-stopped
+
+volumes:
+  wordpress_data:
+  wordpress_db_data:
+
+# Configuración Nginx:
+# server {
+#     server_name blog.ejemplo.com;
+#     location / {
+#         proxy_pass http://localhost:8080;
+#     }
+# }
+
+# ============================================
+# Ejemplo 4: Aplicación Python (FastAPI/Flask)
+# ============================================
+version: '3.8'
+services:
+  python-app:
+    image: python:3.11-slim
+    container_name: python-api
+    working_dir: /app
+    volumes:
+      - ./python-app:/app
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "pip install -r requirements.txt &&
+             uvicorn main:app --host 0.0.0.0 --port 8000"
+    restart: unless-stopped
+
+# Configuración Nginx:
+# server {
+#     server_name api.ejemplo.com;
+#     location / {
+#         proxy_pass http://localhost:8000;
+#     }
+# }
+
+# ============================================
+# Ejemplo 5: Múltiples servicios con red interna
+# ============================================
+version: '3.8'
+services:
+  web:
+    image: nginx:alpine
+    container_name: web
+    ports:
+      - "3003:80"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  api:
+    image: node:18-alpine
+    container_name: api
+    ports:
+      - "3004:3000"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    networks:
+      - app-network
+    restart: unless-stopped
+    # Sin ports = solo accesible desde contenedores en app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+# ============================================
+# Comandos útiles
+# ============================================
+
+# Iniciar servicios:
+#   docker-compose up -d
+
+# Ver logs:
+#   docker-compose logs -f
+
+# Detener servicios:
+#   docker-compose down
+
+# Detener y eliminar volúmenes:
+#   docker-compose down -v
+
+# Ver estado:
+#   docker-compose ps
+
+# Reconstruir:
+#   docker-compose up -d --build
+
+# Ver recursos usados:
+#   docker stats
+
+# ============================================
+# Notas importantes
+# ============================================
+
+# 1. PUERTOS: Solo expón al host los puertos que Nginx necesita hacer proxy
+# 2. PERSISTENCIA: Usa volúmenes para datos que deben persistir
+# 3. REDES: Usa redes internas para comunicación entre contenedores
+# 4. SECRETS: Nunca pongas contraseñas en el compose, usa .env o Docker secrets
+# 5. RESTART: Usa restart: unless-stopped para que arranquen al reiniciar el servidor
+
+# ============================================
+# Ejemplo de .env para secrets
+# ============================================
+
+# Crear archivo .env en el mismo directorio:
+# DB_USER=usuario
+# DB_PASS=contraseña_segura
+# DB_NAME=mi_base_datos
+
+# Usar en docker-compose.yml:
+# environment:
+#   - POSTGRES_USER=${DB_USER}
+#   - POSTGRES_PASSWORD=${DB_PASS}
+#   - POSTGRES_DB=${DB_NAME}

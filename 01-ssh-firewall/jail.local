@@ -1,0 +1,28 @@
+[DEFAULT]
+# Tiempo de baneo en segundos (3600 = 1 hora, 86400 = 1 día)
+bantime = 3600
+
+# Ventana de tiempo para contar intentos fallidos (10 minutos)
+findtime = 600
+
+# Número de intentos permitidos antes de banear
+maxretry = 5
+
+# Acción a tomar (banear la IP)
+banaction = iptables-multiport
+
+# Email de notificación (opcional, descomentalo y pon tu email)
+# destemail = tu-email@ejemplo.com
+# action = %(action_mwl)s
+
+[sshd]
+enabled = true
+port = ssh
+logpath = %(sshd_log)s
+backend = %(sshd_backend)s
+maxretry = 5
+findtime = 600
+bantime = 3600
+
+# Si cambias el puerto SSH, actualiza aquí también
+# port = 2222

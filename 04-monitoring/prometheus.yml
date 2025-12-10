@@ -1,0 +1,48 @@
+# Configuración de Prometheus
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'vpc-personal'
+    environment: 'production'
+
+# Configuración de Alertmanager (opcional)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Archivos de reglas de alertas
+rule_files:
+  - '/etc/prometheus/alerts/*.yml'
+
+# Jobs de scraping de métricas
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node Exporter - Métricas del sistema
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          alias: 'vpc-server'
+
+  # cAdvisor - Métricas de Docker
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  # Nginx Exporter (descomentar si lo instalas)
+  # - job_name: 'nginx'
+  #   static_configs:
+  #     - targets: ['nginx-exporter:9113']
+
+  # WireGuard Exporter (si lo instalas)
+  # - job_name: 'wireguard'
+  #   static_configs:
+  #     - targets: ['wireguard-exporter:9586']

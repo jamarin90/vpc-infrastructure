@@ -1,0 +1,106 @@
+# Configuración SSH Hardening para Debian
+# Ubicación final: /etc/ssh/sshd_config
+# Siempre hacer backup antes de aplicar: cp /etc/ssh/sshd_config /etc/ssh/sshd_config.backup
+# Verificar sintaxis antes de reiniciar: sshd -t
+
+# Puerto SSH (cambiar si quieres usar uno no estándar)
+Port 22
+# Port 2222  # Descomenta y cambia si prefieres otro puerto
+
+# Direcciones de escucha (0.0.0.0 = todas las interfaces)
+AddressFamily any
+ListenAddress 0.0.0.0
+ListenAddress ::
+
+# Protocolo
+Protocol 2
+
+# Llaves del host
+HostKey /etc/ssh/ssh_host_rsa_key
+HostKey /etc/ssh/ssh_host_ecdsa_key
+HostKey /etc/ssh/ssh_host_ed25519_key
+
+# Logging
+SyslogFacility AUTH
+LogLevel VERBOSE
+
+# Autenticación
+
+# Permitir login de root SOLO con llaves (no con password)
+# Cambia a 'no' para deshabilitar root completamente
+PermitRootLogin prohibit-password
+
+# Autenticación con llave pública habilitada
+PubkeyAuthentication yes
+AuthorizedKeysFile .ssh/authorized_keys .ssh/authorized_keys2
+
+# DESHABILITAR autenticación con password
+# ⚠️ ASEGÚRATE de tener llaves SSH configuradas antes de aplicar esto
+PasswordAuthentication no
+PermitEmptyPasswords no
+
+# DESHABILITAR challenge-response (incluye PAM password auth)
+ChallengeResponseAuthentication no
+KbdInteractiveAuthentication no
+
+# Configuración de PAM
+UsePAM yes
+
+# Deshabilitar forwarding innecesario
+AllowAgentForwarding no
+AllowTcpForwarding no
+X11Forwarding no
+PermitTunnel no
+
+# Timeouts y límites
+LoginGraceTime 30
+MaxAuthTries 3
+MaxSessions 5
+ClientAliveInterval 300
+ClientAliveCountMax 2
+
+# Deshabilitar métodos de autenticación débiles
+HostbasedAuthentication no
+IgnoreRhosts yes
+PermitUserEnvironment no
+
+# Configuración de red
+TCPKeepAlive yes
+Compression no
+
+# Subsistemas
+Subsystem sftp /usr/lib/openssh/sftp-server -f AUTHPRIV -l INFO
+
+# Deshabilitar tunelización
+PermitTunnel no
+GatewayPorts no
+
+# Banner (opcional)
+# Banner /etc/ssh/banner.txt
+
+# Opciones de seguridad adicionales
+StrictModes yes
+MaxStartups 10:30:60
+
+# Deshabilitar métodos obsoletos
+PermitUserRC no
+
+# Configuración de cifrado moderna
+# Si da problemas, comenta estas líneas
+KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,diffie-hellman-group-exchange-sha256
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256
+
+# OPCIONAL: Restringir acceso solo a ciertos usuarios
+# Descomenta y personaliza según necesites
+# AllowUsers usuario1 usuario2
+# AllowGroups grupo-ssh
+
+# OPCIONAL: Denegar usuarios/grupos
+# DenyUsers usuario-prohibido
+# DenyGroups grupo-prohibido
+
+# Configuración específica por usuario (ejemplo)
+# Match User usuario-especial
+#     PasswordAuthentication yes
+#     AllowTcpForwarding yes

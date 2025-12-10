@@ -1,0 +1,56 @@
+# Archivos sensibles - NO subir a Git
+
+# Llaves privadas
+*.key
+*.pem
+*.crt
+private.key
+public.key
+
+# Configuraciones de clientes VPN (contienen llaves privadas)
+**/wireguard-clients/**/*.conf
+**/wireguard-clients/**/*.txt
+**/wireguard-clients/deleted/
+
+# Archivos de backup (pueden contener información sensible)
+*.backup
+*.tar.gz
+*.zip
+backup-*
+
+# Archivos temporales
+*.tmp
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Variables de entorno
+.env
+.env.local
+.env.*.local
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Directorios de configuración local
+.vscode/
+.idea/
+
+# Archivos de producción que no deben subirse
+SERVER_INFO.txt
+server-info.txt
+
+# Certificados SSL (no subir, son específicos del servidor)
+*.crt
+*.cer
+fullchain.pem
+privkey.pem
+chain.pem
+
+# Configuraciones SSH que pueden contener IPs
+known_hosts
+authorized_keys

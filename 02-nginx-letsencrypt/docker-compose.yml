@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+    node-app:
+      image: node:18-alpine
+      container_name: mi-app-node
+      working_dir: /app
+      volumes:
+        - ./mi-app:/app
+      ports:
+        - "3000:3000"
+      command: npm start
+      restart: unless-stopped

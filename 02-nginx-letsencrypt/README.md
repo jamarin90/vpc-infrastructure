@@ -53,9 +53,22 @@ Esto instalará:
 
 ### 4. Obtener certificado SSL
 
+**Opción A: Certificado para dominio específico**
 ```bash
 # Reemplaza con tu dominio y email
 ./get-ssl-cert.sh tu-dominio.com tu-email@ejemplo.com
+```
+
+**Opción B: Certificado Wildcard (*.tu-dominio.com)**
+```bash
+# Con validación DNS manual
+./get-wildcard-cert.sh tu-dominio.com tu-email@ejemplo.com
+
+# Con Cloudflare DNS (automático)
+./get-wildcard-cert.sh tu-dominio.com tu-email@ejemplo.com cloudflare
+
+# Con DigitalOcean DNS (automático)
+./get-wildcard-cert.sh tu-dominio.com tu-email@ejemplo.com digitalocean
 ```
 
 Este script:
@@ -130,6 +143,103 @@ ln -s /etc/nginx/sites-available/mi-app.conf /etc/nginx/sites-enabled/
 nginx -t
 systemctl reload nginx
 certbot --nginx -d app.tu-dominio.com
+```
+
+## 🌟 Certificados Wildcard
+
+Los certificados wildcard (`*.tu-dominio.com`) permiten usar un solo certificado para todos los subdominios.
+
+### ¿Cuándo usar wildcard?
+
+| Situación | Recomendación |
+|-----------|---------------|
+| 1-3 subdominios | Certificados individuales |
+| 4+ subdominios | Certificado wildcard |
+| Subdominios dinámicos | Certificado wildcard |
+| Máxima simplicidad | Certificado wildcard |
+
+### Requisitos para wildcard
+
+Los certificados wildcard **requieren validación DNS** (no HTTP). Tienes dos opciones:
+
+1. **Manual**: Crear registros TXT manualmente (no permite renovación automática)
+2. **Automático**: Usar un proveedor DNS soportado (Cloudflare, DigitalOcean, Route53, etc.)
+
+### Obtener certificado wildcard
+
+```bash
+# Opción 1: Validación manual (se te pedirá crear registros TXT)
+./get-wildcard-cert.sh ejemplo.com admin@ejemplo.com
+
+# Opción 2: Con Cloudflare (automático)
+./get-wildcard-cert.sh ejemplo.com admin@ejemplo.com cloudflare
+
+# Opción 3: Con DigitalOcean (automático)
+./get-wildcard-cert.sh ejemplo.com admin@ejemplo.com digitalocean
+
+# Opción 4: Con AWS Route53 (automático)
+./get-wildcard-cert.sh ejemplo.com admin@ejemplo.com route53
+
+# Opción 5: Con Google Cloud DNS (automático)
+./get-wildcard-cert.sh ejemplo.com admin@ejemplo.com google
+```
+
+### Configurar Nginx con wildcard
+
+Una vez obtenido el certificado, todos los subdominios usan los mismos archivos:
+
+```nginx
+# /etc/nginx/sites-available/app.ejemplo.com.conf
+server {
+    listen 443 ssl http2;
+    server_name app.ejemplo.com;
+
+    ssl_certificate /etc/letsencrypt/live/ejemplo.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/ejemplo.com/privkey.pem;
+    include /etc/nginx/snippets/ssl-params.conf;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        # ... resto de configuración proxy
+    }
+}
+
+# /etc/nginx/sites-available/api.ejemplo.com.conf
+server {
+    listen 443 ssl http2;
+    server_name api.ejemplo.com;
+
+    # Mismos certificados
+    ssl_certificate /etc/letsencrypt/live/ejemplo.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/ejemplo.com/privkey.pem;
+    include /etc/nginx/snippets/ssl-params.conf;
+
+    location / {
+        proxy_pass http://localhost:4000;
+    }
+}
+```
+
+### Proveedores DNS soportados
+
+| Proveedor | Plugin | Configuración |
+|-----------|--------|---------------|
+| Cloudflare | `python3-certbot-dns-cloudflare` | API Token |
+| DigitalOcean | `python3-certbot-dns-digitalocean` | API Token |
+| AWS Route53 | `python3-certbot-dns-route53` | AWS credentials |
+| Google Cloud | `python3-certbot-dns-google` | Service Account JSON |
+
+### Renovación de certificados wildcard
+
+- **Con proveedor DNS automático**: Renovación automática cada 60 días
+- **Con validación manual**: Debes renovar manualmente antes de 90 días
+
+```bash
+# Verificar estado de renovación
+certbot certificates
+
+# Probar renovación (dry-run)
+certbot renew --dry-run
 ```
 
 ## 🔄 Renovación automática

@@ -179,8 +179,7 @@ manual_dns_validation() {
         -d "$DOMAIN" \
         -d "*.$DOMAIN" \
         --agree-tos \
-        --email "$EMAIL" \
-        --manual-public-ip-logging-ok
+        --email "$EMAIL"
 }
 
 # Ejecutar según el proveedor DNS

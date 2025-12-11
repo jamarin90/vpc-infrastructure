@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  ttyd:
+    image: tsl0922/ttyd:latest
+    container_name: ttyd
+    ports:
+      # Solo escucha en localhost (Nginx hace el proxy)
+      - "127.0.0.1:7681:7681"
+    environment:
+      - TTYD_USERNAME=admin
+      - TTYD_PASSWORD=cambiame123
+    command: >
+      ttyd
+      --writable
+      --credential admin:cambiame123
+      /bin/bash
+    restart: unless-stopped
+    # Opcional: monta tu home o carpetas especificas
+    # volumes:
+    #   - /home/tu-usuario:/root/home:rw
+    #   - /var/log:/root/logs:ro
+
+# SEGURIDAD:
+# - Puerto 7681 solo en localhost (no expuesto a internet)
+# - Nginx + SSL hace el proxy
+# - Cambia las credenciales antes de usar
+# - Recomendado: solo accesible via VPN WireGuard

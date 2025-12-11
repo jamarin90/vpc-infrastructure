@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  filebrowser:
+    image: filebrowser/filebrowser:latest
+    container_name: filebrowser
+    ports:
+      - "8085:80"
+    volumes:
+      # Carpeta donde guardarás tus archivos
+      - ./data:/srv
+      # Base de datos y configuración
+      - ./filebrowser.db:/database/filebrowser.db
+      - ./settings.json:/config/settings.json
+    environment:
+      - PUID=1000
+      - PGID=1000
+    restart: unless-stopped
+
+# Notas:
+# - Puerto 8085 en el host -> 80 en el contenedor
+# - ./data = carpeta donde subes/descargas archivos
+# - Nginx hará proxy de tu-dominio.com -> localhost:8085

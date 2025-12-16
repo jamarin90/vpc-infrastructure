@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  actual-budget:
+    image: actualbudget/actual-server:latest
+    container_name: actual-budget
+    ports:
+      - "5006:5006"
+    volumes:
+      # Datos persistentes (presupuestos, configuración)
+      - ./data:/data
+    environment:
+      - ACTUAL_UPLOAD_FILE_SYNC_SIZE_LIMIT_MB=20
+      - ACTUAL_UPLOAD_SYNC_ENCRYPTED_FILE_SYNC_SIZE_LIMIT_MB=50
+      - ACTUAL_UPLOAD_FILE_SIZE_LIMIT_MB=20
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5006/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# Notas:
+# - Puerto 5006 en el host -> 5006 en el contenedor
+# - ./data = carpeta donde se guardan los presupuestos
+# - Nginx hará proxy de finanzas.tu-dominio.com -> localhost:5006
+# - Muy ligero: ~50-100MB RAM
+# - Base de datos: SQLite (incluida en ./data)
